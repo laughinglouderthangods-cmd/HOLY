@@ -2,39 +2,52 @@ const { test } = require('@playwright/test');
 
 const scenes = [
   ['hand', async page => {
-    await page.waitForTimeout(800);
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(1500);
+    await page.keyboard.up('ArrowRight');
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(450);
     await page.keyboard.down('KeyF');
-    await page.waitForTimeout(4300);
+    await page.waitForTimeout(3400);
     await page.keyboard.up('KeyF');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(250);
   }],
   ['tea', async page => {
-    await page.waitForTimeout(800);
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(1500);
+    await page.keyboard.up('ArrowRight');
     await page.keyboard.press('KeyE');
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(450);
     await page.keyboard.down('Space');
     await page.keyboard.down('ArrowRight');
-    await page.waitForTimeout(4200);
+    await page.waitForTimeout(3600);
     await page.keyboard.up('ArrowRight');
     await page.keyboard.up('Space');
   }],
   ['key', async page => {
-    await page.waitForTimeout(800);
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(1450);
+    await page.keyboard.up('ArrowRight');
     await page.keyboard.press('KeyE');
-    await page.waitForTimeout(4200);
+    await page.waitForTimeout(2600);
   }],
   ['goat', async page => {
-    await page.waitForTimeout(800);
-    await page.keyboard.press('KeyE');
-    await page.waitForTimeout(800);
     await page.keyboard.down('ArrowRight');
-    await page.waitForTimeout(4800);
+    await page.waitForTimeout(1700);
+    await page.keyboard.up('ArrowRight');
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(450);
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(4000);
     await page.keyboard.up('ArrowRight');
   }],
   ['house', async page => {
-    await page.waitForTimeout(800);
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(3700);
+    await page.keyboard.up('ArrowRight');
+    await page.waitForTimeout(400);
     await page.keyboard.press('KeyE');
-    await page.waitForTimeout(6000);
+    await page.waitForTimeout(2200);
   }],
 ];
 
