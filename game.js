@@ -125,23 +125,23 @@ if(trailerScene){
   if(trailerScene==="key"){
     save.scoreSkulls=999;
     save.bits="1".repeat(999);
-    save.x=MOUND_X+36;
+    save.x=MOUND_X-110;
   } else if(trailerScene==="goat"){
     save.scoreSkulls=999;
     save.bits="1".repeat(999);
     save.key=true;
-    save.x=GOAT_X;
+    save.x=GOAT_X-145;
   } else if(trailerScene==="tea"){
     save.scoreSkulls=321;
-    save.x=720;
+    save.x=570;
   } else if(trailerScene==="hand"){
     save.scoreSkulls=143;
-    save.x=3350;
+    save.x=3200;
   } else if(trailerScene==="house"){
     save.scoreSkulls=999;
     save.bits="1".repeat(999);
     save.key=true;
-    save.x=CHAPEL_X-58;
+    save.x=CHAPEL_X-300;
   }
 } else {
   try { save=Object.assign(freshSave(), JSON.parse(localStorage.getItem(SAVE_KEY)||"{}")); }
@@ -288,9 +288,9 @@ let hand={
 };
 if(trailerScene==="hand"){
   hand.active=true;
-  hand.x=player.x;
-  hand.y=player.y-86;
-  hand.t=.9;
+  hand.x=player.x+105;
+  hand.y=player.y-92;
+  hand.t=.35;
   hand.phase="grab";
   hand.next=999;
 }
