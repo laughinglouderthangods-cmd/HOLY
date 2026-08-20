@@ -1,0 +1,882 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HOUSE OF LOST YOUTH — LIVE LEADERBOARD</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#000; }
+  body {
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Courier New",monospace;
+  }
+  #wrap {
+    position:relative;
+    width:min(100vw, calc(100vh * 4 / 3));
+    aspect-ratio:4/3;
+    background:#000;
+    overflow:hidden;
+  }
+  canvas {
+    width:100%; height:100%; display:block;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    background:#111;
+  }
+  #scan {
+    pointer-events:none; position:absolute; inset:0; z-index:3;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.012) 0px,
+      rgba(255,255,255,0.012) 1px,
+      rgba(0,0,0,0.038) 1px,
+      rgba(0,0,0,0.038) 2px
+    );
+    mix-blend-mode:screen;
+  }
+  #start, #vault {
+    position:absolute; inset:0; z-index:5; background:#000;
+    color:#d1c5b4; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    padding:20px;
+  }
+  #start h1, #vault h2 {
+    margin:0 0 16px; font-size:clamp(20px,4vw,42px);
+    letter-spacing:.06em; line-height:1;
+  }
+  #start p, #vault p {
+    margin:5px 0; font-size:clamp(10px,1.6vw,17px);
+    line-height:1.25;
+  }
+  .purple { color:#85758d; }
+  .rust { color:#8f594b; }
+  .blink { animation:blink .85s steps(1,end) infinite; margin-top:18px !important; }
+  @keyframes blink { 50% { opacity:0; } }
+  #vault { display:none; align-items:stretch; justify-content:flex-start; overflow:auto; text-align:left; }
+  #vault .inner { width:min(760px,94%); margin:auto; }
+  #vault button, #vault label {
+    display:inline-block; font:inherit; color:#d1c5b4; background:#080808;
+    border:2px solid #7c7267; padding:8px 10px; margin:5px 5px 5px 0;
+    cursor:pointer; text-transform:uppercase;
+  }
+  #vault input[type=file] { display:none; }
+  #vault audio, #vault video { width:100%; margin:10px 0; max-height:40vh; background:#000; }
+  #tracklist { margin:8px 0 16px; padding:0; list-style:none; }
+  #tracklist li { padding:4px 0; cursor:pointer; color:#9c9290; }
+  #tracklist li.active { color:#d1c5b4; }
+  #closeVault { float:right; }
+  #secretBox {
+    border:2px solid #423e42; padding:12px; margin-top:14px;
+    color:#85758d; min-height:44px;
+  }
+
+  #pixelTitle {
+    width:min(92%,672px);
+    height:auto;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    margin:0 0 12px;
+  }
+  #start {
+    font-family:"Courier New",monospace;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  #start p {
+    text-shadow:2px 0 0 #191919;
+  }
+
+
+  body, #start, #vault {
+    -webkit-font-smoothing:none;
+    font-smooth:never;
+    text-rendering:optimizeSpeed;
+  }
+  #start p, #vault, #vault button, #vault label {
+    text-shadow:none !important;
+    letter-spacing:0.04em;
+    image-rendering:pixelated;
+  }
+
+
+  #pixelTitle {
+    width:min(92%,560px) !important;
+    height:auto;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    margin:0 0 12px;
+  }
+  #startButtons {
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    align-items:center;
+    margin:14px 0 8px;
+    flex-wrap:wrap;
+  }
+  .menuBtn {
+    appearance:none;
+    border:2px solid #7c3d17;
+    background:#120d0b;
+    color:#d1c5b4;
+    padding:8px 14px;
+    font:inherit;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    cursor:pointer;
+    image-rendering:pixelated;
+  }
+  .menuBtn:hover {
+    background:#221713;
+    border-color:#b46a34;
+  }
+
+
+  #singleLineTitle {
+    width:min(96%, 720px);
+    height:auto;
+    margin:0 0 14px;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    display:block;
+  }
+
+
+  /* ---------- MOBILE CONTROLS ---------- */
+  #mobileControls {
+    display:none;
+    position:relative;
+    width:100%;
+    flex:1;
+    min-height:260px;
+    background:#171419;
+    border-top:2px solid #3b323b;
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    overflow:hidden;
+  }
+  #mobileControls button {
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+    user-select:none;
+  }
+  .mobileBrand {
+    position:absolute;
+    top:12px;
+    left:0;
+    right:0;
+    text-align:center;
+    color:#554a56;
+    font:bold 7px "Courier New",monospace;
+    letter-spacing:.18em;
+    pointer-events:none;
+  }
+  .mobileDpad {
+    position:absolute;
+    left:22px;
+    top:58px;
+    width:142px;
+    height:142px;
+  }
+  .mobileDpad button, .mobileDpad .dCenter {
+    position:absolute;
+    border:0;
+    background:#2b282d;
+    color:#09080a;
+    box-shadow:inset 0 0 0 2px #09080a,0 3px 0 #09080a;
+    font:bold 17px "Courier New",monospace;
+  }
+  .mobileDpad button.pressed { background:#403a42; transform:translateY(2px); }
+  #mUp { left:48px; top:0; width:46px; height:52px; }
+  #mDown { left:48px; bottom:0; width:46px; height:52px; }
+  #mLeft { left:0; top:48px; width:52px; height:46px; }
+  #mRight { right:0; top:48px; width:52px; height:46px; }
+  .mobileDpad .dCenter { left:48px; top:48px; width:46px; height:46px; }
+
+  .mobileActions {
+    position:absolute;
+    right:17px;
+    top:58px;
+    width:188px;
+    height:148px;
+    transform:rotate(-9deg);
+  }
+  .mobileAction {
+    position:absolute;
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    border:3px solid #09080a;
+    color:#ddd0be;
+    font:bold 18px "Courier New",monospace;
+    box-shadow:inset 0 -5px 0 rgba(0,0,0,.28),0 3px 0 #09080a;
+  }
+  .mobileAction.pressed { transform:translateY(2px); filter:brightness(1.14); }
+  #mB { left:0; top:52px; background:#65404a; }
+  #mA { left:67px; top:15px; background:#65404a; }
+  #mSing { right:0; top:62px; background:#5b4a70; font-size:9px; letter-spacing:-.04em; }
+  .mobileActionLabel {
+    position:absolute;
+    color:#776a78;
+    font:bold 7px "Courier New",monospace;
+    pointer-events:none;
+  }
+  .labB { left:17px; top:112px; }
+  .labA { left:84px; top:74px; }
+  .labS { right:9px; top:122px; }
+
+  .mobileSystem {
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%) rotate(-6deg);
+    display:flex;
+    gap:22px;
+  }
+  .mobileSystem > div { text-align:center; }
+  .mobileSystem button {
+    width:50px;
+    height:14px;
+    border-radius:9px;
+    border:2px solid #09080a;
+    background:#403b42;
+    display:block;
+  }
+  .mobileSystem span {
+    display:block;
+    margin-top:5px;
+    font:bold 7px "Courier New",monospace;
+    color:#776b77;
+  }
+  .mobileOnly { display:none; }
+
+  @media (max-width: 768px), (pointer:coarse) {
+    html,body {
+      width:100%;
+      height:100dvh;
+      min-height:100dvh;
+      overflow:hidden;
+      background:#080709;
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:flex-start;
+      overscroll-behavior:none;
+    }
+    #wrap {
+      flex:0 0 auto;
+      width:100vw;
+      max-width:none;
+      height:auto;
+      aspect-ratio:4/3;
+      margin:0;
+    }
+    #mobileControls {
+      display:block;
+    }
+    .desktopOnly { display:none !important; }
+    .mobileOnly { display:block !important; }
+
+    #start {
+      padding:6px 8px;
+      justify-content:center;
+      overflow:hidden;
+    }
+    #start #singleLineTitle {
+      width:min(92%,560px);
+      margin-bottom:4px;
+    }
+    #start p {
+      margin:1px 0;
+      font-size:clamp(6px,2.15vw,9px);
+      line-height:1.05;
+      letter-spacing:.02em;
+    }
+    #startButtons {
+      margin:5px 0 2px;
+      gap:7px;
+    }
+    .menuBtn {
+      padding:5px 9px;
+      font-size:8px;
+    }
+    .blink { margin-top:3px !important; }
+  }
+
+  @media (max-width: 355px) {
+    .mobileDpad { transform:scale(.88); transform-origin:top left; left:12px; }
+    .mobileActions { transform:rotate(-9deg) scale(.88); transform-origin:top right; right:8px; }
+  }
+
+  @media (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+    body {
+      align-items:center;
+      justify-content:center;
+      background:#000;
+    }
+    #wrap {
+      height:100dvh;
+      width:auto;
+      max-width:calc(100dvh * 4 / 3);
+      aspect-ratio:4/3;
+    }
+    #mobileControls {
+      display:block;
+      position:fixed;
+      inset:0;
+      min-height:0;
+      pointer-events:none;
+      background:transparent;
+      border:0;
+      z-index:20;
+    }
+    #mobileControls button { pointer-events:auto; opacity:.72; }
+    .mobileBrand, .mobileSystem { display:none; }
+    .mobileDpad { top:auto; bottom:15px; left:12px; transform:scale(.72); transform-origin:bottom left; opacity:.70; }
+    .mobileActions { top:auto; bottom:8px; right:8px; transform:rotate(-9deg) scale(.72); transform-origin:bottom right; opacity:.75; }
+  }
+
+
+  /* ===== MOBILE V2: larger, fixed controls below the playfield ===== */
+  html, body {
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  button, canvas, #mobileControls, #mobileControls * {
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  @media (max-width:768px), (pointer:coarse) {
+    body {
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100dvh;
+      display:block;
+      overflow:hidden;
+      background:#080709;
+      touch-action:none;
+    }
+
+    #wrap {
+      position:fixed !important;
+      top:0;
+      left:0;
+      width:100vw !important;
+      height:75vw !important;
+      max-height:46dvh;
+      min-height:0;
+      aspect-ratio:4/3;
+      z-index:2;
+    }
+
+    #mobileControls {
+      position:fixed !important;
+      display:block !important;
+      left:0;
+      right:0;
+      top:min(75vw,46dvh);
+      bottom:0;
+      width:100vw;
+      min-height:0;
+      height:auto;
+      z-index:20;
+      overflow:hidden;
+      background:
+        linear-gradient(#1b171c,#111014 70%,#0b0a0d);
+      border-top:2px solid #3b333c;
+    }
+
+    .mobileBrand {
+      top:10px;
+      font-size:8px;
+      color:#655966;
+    }
+
+    .mobileDpad {
+      left:18px;
+      top:48px;
+      width:178px;
+      height:178px;
+      transform:none;
+    }
+    #mUp    { left:59px; top:0; width:60px; height:64px; }
+    #mDown  { left:59px; bottom:0; width:60px; height:64px; }
+    #mLeft  { left:0; top:59px; width:64px; height:60px; }
+    #mRight { right:0; top:59px; width:64px; height:60px; }
+    .mobileDpad .dCenter { left:59px; top:59px; width:60px; height:60px; }
+    .mobileDpad button {
+      font-size:23px;
+    }
+
+    .mobileActions {
+      right:13px;
+      top:48px;
+      width:202px;
+      height:184px;
+      transform:rotate(-7deg);
+    }
+    .mobileAction {
+      width:72px;
+      height:72px;
+      font-size:25px;
+      border-width:4px;
+    }
+    #mB { left:0; top:78px; }
+    #mA { left:66px; top:5px; }
+    #mSing {
+      right:0;
+      top:84px;
+      width:78px;
+      height:78px;
+      font-size:10px;
+      letter-spacing:-.04em;
+    }
+    .labB { left:22px; top:151px; }
+    .labA { left:89px; top:78px; }
+    .labS { right:15px; top:163px; }
+
+    .mobileSystem {
+      bottom:22px;
+      gap:34px;
+    }
+    .mobileSystem button {
+      width:58px;
+      height:17px;
+    }
+    .mobileSystem span {
+      font-size:8px;
+    }
+
+    #start {
+      padding:5px 8px;
+    }
+
+    #start p {
+      font-size:clamp(6px,2.15vw,9px);
+    }
+  }
+
+  @media (max-width:390px), (pointer:coarse) {
+    .mobileDpad {
+      left:10px;
+      transform:scale(.90);
+      transform-origin:top left;
+    }
+    .mobileActions {
+      right:7px;
+      transform:rotate(-7deg) scale(.90);
+      transform-origin:top right;
+    }
+  }
+
+  /* Keep controls away from the browser / host badge area in landscape. */
+  @media (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+    #wrap {
+      top:0;
+      left:50%;
+      transform:translateX(-50%);
+      width:auto !important;
+      height:100dvh !important;
+      max-height:none;
+      aspect-ratio:4/3;
+    }
+    #mobileControls {
+      position:fixed !important;
+      inset:0 !important;
+      height:100dvh !important;
+      background:transparent !important;
+      border:0 !important;
+      pointer-events:none;
+      z-index:30;
+    }
+    #mobileControls button { pointer-events:auto; }
+    .mobileDpad {
+      left:12px;
+      top:auto;
+      bottom:18px;
+      transform:scale(.72);
+      transform-origin:bottom left;
+    }
+    .mobileActions {
+      right:14px;
+      top:auto;
+      bottom:14px;
+      transform:rotate(-7deg) scale(.72);
+      transform-origin:bottom right;
+    }
+    .mobileBrand, .mobileSystem { display:none !important; }
+  }
+
+  /* ===== Completion / live leaderboard ===== */
+  #completionOverlay {
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(0,0,0,.94);
+    color:#d1c5b4;
+    font-family:"Courier New",monospace;
+  }
+  #completionOverlay.show { display:flex; }
+  #completionCard {
+    width:min(92vw,520px);
+    max-height:90dvh;
+    overflow:auto;
+    border:2px solid #65556f;
+    background:#0b0a0d;
+    padding:18px;
+    box-shadow:0 0 0 4px #19151c;
+  }
+  #completionCard h2 {
+    margin:0 0 6px;
+    color:#d8cebd;
+    font-size:22px;
+    text-align:center;
+    letter-spacing:.05em;
+  }
+  #completionCard .sub {
+    margin:0 0 16px;
+    color:#8f8098;
+    text-align:center;
+    font-size:12px;
+  }
+  #nameForm label {
+    display:block;
+    font-size:11px;
+    margin-bottom:6px;
+    color:#b9ad9d;
+  }
+  #playerName {
+    width:100%;
+    height:46px;
+    border:2px solid #6c5b72;
+    background:#050506;
+    color:#f0e6d8;
+    padding:0 12px;
+    font:bold 18px "Courier New",monospace;
+    text-transform:uppercase;
+    outline:none;
+    -webkit-user-select:text;
+    user-select:text;
+  }
+  #submitScore, #albumButton {
+    width:100%;
+    margin-top:10px;
+    min-height:46px;
+    border:2px solid #74472f;
+    background:#17100d;
+    color:#e4d8c7;
+    font:bold 12px "Courier New",monospace;
+    letter-spacing:.04em;
+  }
+  #albumButton {
+    display:none;
+    border-color:#665270;
+    background:#17121a;
+  }
+  #leaderStatus {
+    min-height:16px;
+    margin:8px 0;
+    text-align:center;
+    font-size:10px;
+    color:#9b8ca3;
+  }
+  #leaderboardWrap {
+    display:none;
+    margin-top:12px;
+  }
+  #leaderboardWrap h3 {
+    font-size:12px;
+    margin:0 0 8px;
+    color:#d8cebd;
+    text-align:center;
+    letter-spacing:.08em;
+  }
+  #leaderboard {
+    list-style:none;
+    padding:0;
+    margin:0;
+    border-top:1px solid #302933;
+  }
+  #leaderboard li {
+    display:grid;
+    grid-template-columns:32px 1fr auto;
+    gap:8px;
+    padding:7px 4px;
+    border-bottom:1px solid #272229;
+    font-size:11px;
+  }
+  #leaderboard li.me {
+    color:#e7ddeb;
+    background:#201923;
+  }
+  #leaderboard .rank { color:#796c80; }
+  #leaderboard .score { color:#a4958a; }
+  #redirectCountdown {
+    display:none;
+    text-align:center;
+    margin-top:8px;
+    font-size:9px;
+    color:#776a78;
+  }
+
+  @media (max-width:600px) {
+    #completionOverlay {
+      align-items:flex-start;
+      padding:calc(env(safe-area-inset-top) + 12px) 12px 12px;
+      overflow:auto;
+    }
+    #completionCard {
+      width:100%;
+      max-height:none;
+      margin-bottom:calc(env(safe-area-inset-bottom) + 12px);
+      padding:16px;
+    }
+    #completionCard h2 { font-size:18px; }
+  }
+
+
+
+  /* ===== MOBILE CONTROLLER REFRESH: simple 80s retro ===== */
+  #mobileControls {
+    background:
+      linear-gradient(180deg, #232126 0%, #17161a 46%, #0f0f12 100%) !important;
+    border-top:1px solid #5e5657 !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07), inset 0 10px 28px rgba(0,0,0,.22);
+  }
+  .mobileBrand {
+    color:#78706d;
+    font: bold 7px "Courier New", monospace;
+    letter-spacing:.24em;
+    opacity:.9;
+  }
+  .mobileDpad button,
+  .mobileDpad .dCenter {
+    background:linear-gradient(180deg, #55585d 0%, #303238 55%, #1e2024 100%) !important;
+    color:#0d0e11 !important;
+    border:2px solid #0f1013 !important;
+    border-radius:6px;
+    box-shadow:
+      inset 1px 1px 0 rgba(255,255,255,.16),
+      inset -1px -1px 0 rgba(0,0,0,.42),
+      0 3px 0 #0b0c0f !important;
+  }
+  .mobileDpad button.pressed {
+    background:linear-gradient(180deg, #3c3f44 0%, #24262a 100%) !important;
+    transform:translateY(2px);
+    box-shadow:
+      inset 1px 1px 0 rgba(255,255,255,.08),
+      inset -1px -1px 0 rgba(0,0,0,.5),
+      0 1px 0 #0b0c0f !important;
+  }
+  .mobileActions {
+    transform:rotate(-3deg) !important;
+  }
+  .mobileAction {
+    border:3px solid #121215 !important;
+    color:#eadfce !important;
+    text-shadow:0 1px 0 rgba(0,0,0,.38);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.16),
+      inset 0 -5px 0 rgba(0,0,0,.26),
+      0 3px 0 #0b0c0f !important;
+  }
+  #mA, #mB {
+    background:linear-gradient(180deg, #8a4a52 0%, #6b363f 62%, #4d242c 100%) !important;
+  }
+  #mSing {
+    background:linear-gradient(180deg, #68606f 0%, #514959 58%, #3a3441 100%) !important;
+    font-size:10px !important;
+    letter-spacing:.02em !important;
+  }
+  .mobileAction.pressed {
+    transform:translateY(2px);
+    filter:brightness(0.96);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.10),
+      inset 0 -3px 0 rgba(0,0,0,.28),
+      0 1px 0 #0b0c0f !important;
+  }
+  .mobileActionLabel,
+  .mobileSystem span {
+    color:#8a817f !important;
+    letter-spacing:.12em;
+  }
+  .mobileSystem {
+    transform:translateX(-50%) rotate(-2deg) !important;
+  }
+  .mobileSystem button {
+    border:2px solid #111216 !important;
+    background:linear-gradient(180deg, #575259 0%, #343039 100%) !important;
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.13), 0 2px 0 #0b0c0f !important;
+  }
+
+  @media (max-width:768px), (pointer:coarse) {
+    #mobileControls {
+      background:
+        linear-gradient(180deg, #262328 0%, #1a181d 48%, #101014 100%) !important;
+      border-top:1px solid #655d5e !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 18px 40px rgba(0,0,0,.18) !important;
+    }
+    .mobileBrand {
+      top:11px;
+      font-size:7px;
+      letter-spacing:.26em;
+    }
+    .mobileActions {
+      width:196px;
+      height:180px;
+      transform:rotate(-2deg) !important;
+    }
+    .mobileAction {
+      width:70px;
+      height:70px;
+      font-size:23px;
+      border-width:3px;
+    }
+    #mB { left:0; top:78px; }
+    #mA { left:66px; top:8px; }
+    #mSing {
+      right:0;
+      top:84px;
+      width:76px;
+      height:76px;
+      font-size:11px !important;
+    }
+    .labB { left:19px; top:150px; }
+    .labA { left:86px; top:80px; }
+    .labS { right:10px; top:162px; }
+  }
+
+  @media (max-width:390px), (pointer:coarse) {
+    .mobileDpad {
+      transform:scale(.88);
+      transform-origin:top left;
+    }
+    .mobileActions {
+      transform:rotate(-2deg) scale(.88) !important;
+      transform-origin:top right;
+    }
+  }
+
+  @media (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+    .mobileDpad {
+      transform:scale(.72);
+      transform-origin:bottom left;
+    }
+    .mobileActions {
+      transform:rotate(-2deg) scale(.72) !important;
+      transform-origin:bottom right;
+    }
+  }
+
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="game" width="320" height="240"></canvas>
+<div id="scan"></div>
+
+<div id="start">
+  <img id="singleLineTitle" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlEAAAA/CAYAAADAHZ3dAAAExElEQVR4nO3dP67cRBwAYAflBFSIFOkiSCqKpOACERUHCMoZqBFSFClKzRkicoBUUS5AkRRUCSgdBYiKKywF+Mn71n/GM2PP2P6+6um955nxzzP27OxvZ5sGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlnVj7gH//PX7qWma5u8//7j63d37D7OUM7e8D+/enD67dbsZKmfM9Tra9nz6+Rdnv//w7s1pTvuGyplbXl85fcdOGYtPX71DdcTGeaicofiEmopzSjkpcQ5tz1HjnOu+kdKeNe4bQ/UO/S2mPWP3jVz9J+X+3G3PUv1wL/fnlPvG3fsPb8TG+Xp5Q+2Ze25L9udS840hn6QcDABwVDfnHpD6CqfVznRjZu9Ltmdv5eSKT85yUmf+TSPOIeXUFOfaxule21NbObWN09rKqS3Oue4btfbD1PlGn9mTqD7fffv9VcN+fvVT8gXIXV7uOrZ4vupdR03nVlNb+tTevj41tdn47bfF+7PnUXi9tZ2vt/MAACJkWYnq+urLr69mdb/+9kvyLLEt7+WLJxd/6y47dmeTIX748Zvuz6emaZpHj5/ObvNWzje03j7Pn73OWdVgvTniN9dUIuma/WrPcZ6yVPtKXd/c9U5p49dty1gd3fNoxfS/o/Wroz6PSvar0P/Leb5zyrMSBQAQwSQKACBC9rfz1jSUEBa2FHi57HjvzoPm3p0Hp+vl1SLtfPN4//HtWlUVU0O/OkKcSyl1fdcev+N1XJ5Hl/43Xw33jTXoV+esRAEARNj0SlRXRELY6KuDNVd3YiyY0Bl83jUmkuZWQ786QpxLKXV9107I7qljF+O8L5n7PLn5v58fPX56ceySyf813DfWsEK/qvK8u6xEAQBEMIkCAIiwm7fzADiuNuG53Wepq9bkf7bPShQAQIQsK1F9iXz/M3uP1LdDbEqcU75UslS9RyPO+1HT+D2aqWTzvh3B+5LIJ5LDPdsKqW2+YSUKACCCSRQAQASJ5RswljAZaihhcmml6j0aca7Xlsfv1sUkm0siZw4rUQAAEbKsRD1/9jr62PMkMcak7KY7lVg5JuX6dq29S/PWiPO+lRq/TDNmtqO2+YaVKACACCZRAAARsieWv//4duYR3s6LMT8R8jLOobv4ds2/vsQQ530rNX5hT2qYb1iJAgCIsOgWB4EJej5OmihHnGM+1isBcx3ivG+5x6/+whGVmm9YiQIAiGASBQAQwSQKACCCSRQAQITNfHded3fedrff891Hzz66OJk8Frp7cKl6X754ElReqFy7Jc8936m2lNYXlzWuL+v0q1LXt6bxS36l+lWp5xHDrEQBAEQwiQIAiLCZt/O62t152y/ijNFdugzdPbhUvTmUqndOW0rb8vVlul9t+frqV/XyPDo2K1EAABGSVgH6EtG632Uzd+fclPJSkuJytzl3vbkT/krVm9KWUkpd39rjkqKmfrXn8RtK/1snpqFqfx6ltKXU/GDJ8qxEAQBEMIkCAIiQbZm2LxEtZUkwpbyUpLjcbc5db+6Ev1L1prSllFLXt/a4pKipX+15/IbS/9aJaajan0cpbSk1P8hdnpUoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlvYvoCZhwpJnSAEAAAAASUVORK5CYII=" alt="HOUSE OF LOST YOUTH">
+  <p>COLLECT 999 SKULLS</p><p>SEARCH THE OLD GRAVEYARD.</p>
+  <p><span class="purple">OPIUM TEA</span> UNFURLS YOUR WINGS FOR 10 SECONDS</p>
+  <p>RETURN TO THE MOUND FOR THE SKELETON KEY</p>
+  <p>UNLOCK THE HOUSE OF LOST YOUTH</p>
+  <br>
+  <p class="desktopOnly">A / D OR ← / → &nbsp; MOVE</p>
+  <p class="desktopOnly">SPACE &nbsp; JUMP / ASCEND</p>
+  <p class="desktopOnly">SHIFT &nbsp; DESCEND WHILE FLYING</p>
+  <p class="desktopOnly">E &nbsp; INTERACT / RIDE GOAT / ENTER HOUSE</p>
+  <p class="desktopOnly">F &nbsp; ATTACK / SONIC DEFENSE</p>
+  <p class="desktopOnly">ESC &nbsp; PAUSE</p><p class="desktopOnly">M &nbsp; SOUND ON / OFF</p>
+    <div class="mobileOnly">
+    <p>D-PAD LEFT / RIGHT &nbsp; MOVE</p>
+    <p>A &nbsp; JUMP / ASCEND</p>
+    <p>D-PAD DOWN &nbsp; DESCEND WHILE FLYING</p>
+    <p>B &nbsp; INTERACT / RIDE GOAT / ENTER HOUSE</p>
+    <p><span class="purple">ATTACK</span> &nbsp; SONIC DEFENSE</p>
+    <p>START &nbsp; PAUSE &nbsp;&nbsp; SELECT &nbsp; SOUND</p>
+  </div>
+  <div id="startButtons"><button id="btnContinue" class="menuBtn">CONTINUE</button><button id="btnNewGame" class="menuBtn">NEW GAME</button></div><p class="desktopOnly blink">PRESS ENTER TO CONTINUE</p><p class="desktopOnly">PRESS N FOR NEW GAME</p>
+</div>
+
+<div id="vault">
+  <div class="inner">
+    <button id="closeVault">RETURN</button>
+    <h2>HOUSE OF LOST YOUTH</h2>
+    <p class="purple">CONTENT VAULT</p>
+    <p>LOAD THE ALBUM, A MUSIC VIDEO, OR WHATEVER YOU WANT THIS ROOM TO HOLD.</p>
+    <label>LOAD AUDIO<input id="audioFiles" type="file" accept="audio/*" multiple></label>
+    <label>LOAD VIDEO<input id="videoFile" type="file" accept="video/*"></label>
+    <button id="secretBtn">SECRET SLOT</button>
+    <ul id="tracklist"></ul>
+    <audio id="audio" controls></audio>
+    <video id="video" controls style="display:none"></video>
+    <div id="secretBox">NO SECRET LOADED.</div>
+  </div>
+</div>
+</div>
+
+<div id="mobileControls" aria-label="Mobile game controls">
+  <div class="mobileBrand">HOUSE OF LOST YOUTH</div>
+
+  <div class="mobileDpad">
+    <button id="mUp" aria-label="Jump or ascend">▲</button>
+    <button id="mLeft" aria-label="Move left">◀</button>
+    <div class="dCenter"></div>
+    <button id="mRight" aria-label="Move right">▶</button>
+    <button id="mDown" aria-label="Descend">▼</button>
+  </div>
+
+  <div class="mobileActions">
+    <button id="mB" class="mobileAction" aria-label="Interact">B</button>
+    <button id="mA" class="mobileAction" aria-label="Jump">A</button>
+    <button id="mSing" class="mobileAction" aria-label="Attack / sonic defense">ATTACK</button>
+    <span class="mobileActionLabel labB">ACT</span>
+    <span class="mobileActionLabel labA">JUMP</span>
+    <span class="mobileActionLabel labS">ATTACK</span>
+  </div>
+
+  <div class="mobileSystem">
+    <div><button id="mSelect" aria-label="Toggle sound"></button><span>SELECT</span></div>
+    <div><button id="mStart" aria-label="Start or pause"></button><span>START</span></div>
+  </div>
+</div>
+
+
+<div id="completionOverlay" role="dialog" aria-modal="true" aria-labelledby="completionTitle">
+  <div id="completionCard">
+    <h2 id="completionTitle">POSTHUMAN UNLOCKED</h2>
+
+    <form id="nameForm">
+      <label for="playerName">ENTER YOUR NAME FOR THE LIVE LEADERBOARD</label>
+      <input id="playerName" name="name" maxlength="24" autocomplete="nickname" required placeholder="YOUR NAME">
+      <button id="submitScore" type="submit">ADD ME TO THE LEADERBOARD</button>
+    </form>
+
+    <div id="leaderStatus" aria-live="polite"></div>
+
+    <div id="leaderboardWrap">
+      <h3>LIVE LEADERBOARD</h3>
+      <ol id="leaderboard"></ol>
+    </div>
+
+    <button id="albumButton" type="button">LISTEN TO POSTHUMAN</button>
+    <div id="redirectCountdown"></div>
+  </div>
+</div>
+
+<script src="/game.js" defer></script>
+</body>
+</html>
